@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, xml, fileinfo, intl, pdo_sqlite
+          coverage: none
+      - name: Composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Prepare app (optional)
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Lint (Pint)
+        run: composer lint
+      - name: Static Analysis (PHPStan)
+        run: composer stan
+      - name: Test (PHPUnit)
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: none
+        run:
+          composer test:parallel
