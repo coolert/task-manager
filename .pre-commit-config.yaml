@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: pint
+        name: Laravel Pint (in Sail)
+        language: system
+        files: \.(php)$
+        pass_filenames: true
+        entry: bash -lc 'docker compose exec -T -w /var/www/html laravel.test composer lint'
+      - id: phpstan
+        name: PHPStan (in Sail)
+        language: system
+        pass_filenames: false
+        entry: bash -lc 'docker compose exec -T -w /var/www/html laravel.test composer stan'
+ci:
+  skip: [pint, phpstan]
