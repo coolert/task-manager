@@ -60,7 +60,7 @@
         ],
         "test:parallel": [
             "@php artisan config:clear --ansi",
-            "@php artisan test -parallel"
+            "@php artisan test -parallel --recreate-databases"
         ],
         "lint": "vendor/bin/pint --test",
         "lint:fix": "vendor/bin/pint",
