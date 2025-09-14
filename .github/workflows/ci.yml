@@ -30,6 +30,5 @@ jobs:
       - name: Test (PHPUnit)
         env:
           APP_ENV: testing
-          DB_CONNECTION: none
         run:
           composer test:parallel
