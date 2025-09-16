@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained();
+            $table->foreignId('creator_id')->constrained('users');
             $table->string('title', 150);
             $table->mediumText('description')->nullable();
             $table->enum('status', ['todo', 'doing', 'done'])->default('todo');
