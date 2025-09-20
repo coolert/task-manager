@@ -28,6 +28,15 @@ jobs:
         run: composer lint
       - name: Static Analysis (PHPStan)
         run: composer stan
+      - name: Run Migrations
+        env:
+          APP_ENV: testing
+        run: php artisan migrate --env=testing --force
+      - name: Seed database
+        env:
+          APP_ENV: testing
+          SEED_PROFILE: mini
+        run: php artisan db:seed --env=testing --force
       - name: Test (PHPUnit)
         env:
           APP_ENV: testing
