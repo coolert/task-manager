@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectRole;
 use Database\Factories\ProjectMemberFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,10 @@ class ProjectMember extends Model
         'project_id',
         'user_id',
         'roles',
+    ];
+
+    protected $casts = [
+        'role' => ProjectRole::class,
     ];
 
     /**

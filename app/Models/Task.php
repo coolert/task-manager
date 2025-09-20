@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +26,11 @@ class Task extends Model
         'assignee_id',
         'due_date',
         'order_no',
+    ];
+
+    protected $casts = [
+        'status'   => TaskStatus::class,
+        'priority' => TaskPriority::class,
     ];
 
     /**
@@ -55,7 +62,7 @@ class Task extends Model
      */
     public function labels(): BelongsToMany
     {
-        return $this->belongsToMany(Label::class, 'task_labels');
+        return $this->belongsToMany(Label::class, 'task_labels')->withTimestamps();
     }
 
     /**
