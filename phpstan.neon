@@ -1,9 +1,13 @@
 includes:
   - vendor/larastan/larastan/extension.neon
+  - vendor/pestphp/pest/extension.neon
 parameters:
   paths:
     - app
     - database
+    - tests
+  scanFiles:
+    - tests/Pest.php
   level: 6
   tmpDir: build/phpstan
   bootstrapFiles:

@@ -58,11 +58,11 @@ class Task extends Model
     }
 
     /**
-     * @phpstan-return BelongsToMany<Label, $this>
+     * @phpstan-return BelongsToMany<Label, $this, TaskLabel>
      */
     public function labels(): BelongsToMany
     {
-        return $this->belongsToMany(Label::class, 'task_labels')->withTimestamps();
+        return $this->belongsToMany(Label::class, 'task_labels')->using(TaskLabel::class)->withTimestamps();
     }
 
     /**
