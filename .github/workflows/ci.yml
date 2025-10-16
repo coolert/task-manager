@@ -24,6 +24,10 @@ jobs:
           cp .env.testing .env
           mkdir -p database
           touch database/testing.sqlite
+      - name: JWT setup
+        run: |
+          php artisan vendor:publish --provider="PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider" --force
+          echo "JWT_SECRET=testing-secret" >> .env.testing
       - name: Lint (Pint)
         run: composer lint
       - name: Static Analysis (PHPStan)

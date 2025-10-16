@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Project;
+use App\Models\Task;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +19,13 @@ class EnsureProjectMember
     {
         $user    = $request->user();
         $project = $request->route('project');
+
+        if (! $project instanceof Project) {
+            $task = $request->route('task');
+            if ($task instanceof Task) {
+                $project = $task->project()->select('id', 'owner_id')->first();
+            }
+        }
 
         if (! $project instanceof Project) {
             abort(404);

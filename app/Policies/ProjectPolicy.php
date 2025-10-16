@@ -38,4 +38,16 @@ class ProjectPolicy
     {
         return ProjectAcl::roleOf($project, $user) === ProjectRole::Owner;
     }
+
+    public function viewLabels(User $user, Project $project): bool
+    {
+        return ProjectAcl::roleOf($project, $user) !== null;
+    }
+
+    public function manageLabels(User $user, Project $project): bool
+    {
+        $role = ProjectAcl::roleOf($project, $user);
+
+        return in_array($role, [ProjectRole::Owner, ProjectRole::Admin], true);
+    }
 }
