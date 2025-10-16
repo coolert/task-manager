@@ -5,46 +5,60 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\JWTGuard;
 
 class AuthController extends Controller
 {
     public function login(Request $request): JsonResponse
     {
+        /** @var JWTGuard $guard */
+        $guard = auth('api');
+
         $credentials = $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
-        if (! $token = Auth::guard('api')->attempt($credentials)) {
+
+        if (! $token = $guard->attempt($credentials)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         return response()->json([
             'token'      => $token,
             'token_type' => 'Bearer',
-            'expires_in' => JWTAuth::factory()->getTTL() * 60,
+            'expires_in' => (int) config('jwt.ttl', 60) * 60,
         ]);
     }
 
     public function refresh(): JsonResponse
     {
+        /** @var JWTGuard $guard */
+        $guard = auth('api');
+
+        $token = $guard->refresh();
+
         return response()->json([
-            'token'      => JWTAuth::refresh(),
+            'token'      => $token,
             'token_type' => 'Bearer',
-            'expires_in' => JWTAuth::factory()->getTTL() * 60,
+            'expires_in' => (int) config('jwt.ttl', 60) * 60,
         ]);
     }
 
     public function logout(): Response
     {
-        auth('api')->logout();
+        /** @var JWTGuard $guard */
+        $guard = auth('api');
+
+        $guard->logout();
 
         return response()->noContent();
     }
 
     public function me(): JsonResponse
     {
-        return response()->json(auth('api')->user());
+        /** @var JWTGuard $guard */
+        $guard = auth('api');
+
+        return response()->json($guard->user());
     }
 }

@@ -6,7 +6,8 @@ use Illuminate\Testing\TestResponse;
 
 use function Pest\Laravel\withHeaders;
 
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\JWTGuard;
+
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -17,7 +18,10 @@ use Symfony\Component\HttpFoundation\Response;
  */
 function requestAs(User $user, string $method, string $uri, array $json = [], array $headers = []): TestResponse
 {
-    $token   = JWTAuth::fromUser($user);
+    /** @var JWTGuard $guard */
+    $guard = auth('api');
+
+    $token   = $guard->fromUser($user);
     $headers = ['Authorization' => "Bearer {$token}"] + $headers;
 
     return withHeaders($headers)->json($method, $uri, $json);
