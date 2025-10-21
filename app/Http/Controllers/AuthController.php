@@ -49,7 +49,9 @@ class AuthController extends Controller
         /** @var JWTGuard $guard */
         $guard = auth('api');
 
-        $guard->logout();
+        if ($token = request()->bearerToken()) {
+            $guard->setToken($token)->invalidate(true);
+        }
 
         return response()->noContent();
     }

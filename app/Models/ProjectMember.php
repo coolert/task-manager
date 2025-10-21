@@ -16,7 +16,7 @@ class ProjectMember extends Model
     protected $fillable = [
         'project_id',
         'user_id',
-        'roles',
+        'role',
     ];
 
     protected $casts = [
