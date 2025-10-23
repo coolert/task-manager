@@ -15,7 +15,7 @@ Designed as a **portfolio project** to showcase strong backend engineering:
 | **Access Control** | Policy-based RBAC: Owner / Admin / Member / Viewer                            |
 | **Validation Layer** | Form Requests + DTO pattern                                                   |
 | **Serialization** | Resource classes (type-safe via `@mixin` hints)                               |
-| **Testing** | Comprehensive feature coverage across Projects, Tasks, Members, Labels, Comments       |
+| **Testing** | Comprehensive endpoint coverage across Projects, Tasks, Members, Labels, Comments       |
 | **CI/CD** | GitHub Actions: Lint → PHPStan → Migrate → Seed → Parallel Tests              |
 | **Database** | MySQL / SQLite (in CI) + Redis (for JWT cache)                                |
 | **Containerization** | Laravel Sail (PHP + Redis + MySQL stack)                                      |
@@ -48,6 +48,8 @@ To reset DB:
 ---
 
 ### Authentication
+
+All API endpoints return JSON. Clients are encouraged to send `Accept: application/json` to ensure consistent JSON error responses across auth and non-auth flows.
 
 ```bash
 POST /api/auth/login
@@ -94,9 +96,12 @@ Policies are automatically resolved via Laravel’s `authorizeResource()` or man
 
 
 ### Middleware
+
 `EnsureProjectMember`
 Ensures the authenticated user belongs to the target project;
 resolves project from either route `{project}` or `{task}`.
+
+Route model binding uses `scopeBindings` for nested resources (e.g., `/projects/{project}/labels/{label}`), ensuring the nested model belongs to the parent (prevents cross-project access).
 
 ---
 
@@ -156,6 +161,80 @@ requestAs($user, 'POST', '/api/tasks/1/claim')
 
 ---
 
+## 🧩 Example API Usage
+
+A quick look at the core API endpoints — simple, predictable, and RESTful.
+
+| Method | Endpoint | Description |
+|---------|-----------|-------------|
+| `POST` | `/api/auth/login` | Login and obtain JWT token |
+| `GET` | `/api/auth/me` | Get authenticated user info |
+| `GET` | `/api/projects` | List owned or joined projects |
+| `POST` | `/api/projects` | Create a new project |
+| `POST` | `/api/projects/{project}/tasks` | Create a task within a project |
+| `POST` | `/api/tasks/{task}/assign` | Assign a task to another member |
+| `POST` | `/api/tasks/{task}/claim` | Claim an unassigned task |
+| `POST` | `/api/tasks/{task}/comments` | Add a comment to a task |
+| `POST` | `/api/tasks/{task}/labels/{label}` | Attach a label to a task |
+
+### Example Workflow
+
+```bash
+# 1. Login to get a token
+curl -X POST https://example.com/api/auth/login \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "demo@example.com", "password": "password"}'
+
+# 2. Create a new project
+curl -X POST https://example.com/api/projects \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My Demo Project"}'
+
+# 3. Create a task within the project
+curl -X POST https://example.com/api/projects/1/tasks \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Implement Redis blacklist", "status": "todo", "priority": "normal"}'
+
+# 4. Assign or claim the task
+curl -X POST https://example.com/api/tasks/1/claim \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+All responses follow consistent JSON formatting, using typed Laravel Resource classes for serialization.
+
+Example success:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "Implement Redis blacklist",
+    "status": "todo",
+    "priority": "normal",
+    "assignee": { "id": 3, "name": "Jim" },
+    "creator": { "id": 1, "name": "Mary" }
+  }
+}
+```
+
+Example validation error:
+
+```json
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "email": [
+      "The email field is required."
+    ]
+  }
+}
+```
+
+---
+
 ## ⚡ CI/CD
 
 The complete CI workflow is defined in `.github/workflows/ci.yml`.
@@ -203,7 +282,7 @@ Each PR runs the same suite to ensure code quality and regression safety.
 |------|--------|
 | **Framework** | Laravel 12 |
 | **Auth** | JWT via `php-open-source-saver/jwt-auth` |
-| **Cache/Queue** | Redis |
+| **Cache** | Redis |
 | **Tests** | Pest + Parallel + SQLite |
 | **Static Analysis** | PHPStan (Level 6, planned upgrade to 7–8) |
 | **Style** | Pint |
@@ -266,7 +345,7 @@ Static checks are enforced via **PHPStan (level 6)** and **Pint**.
 Generics (`@template`, `@extends`, `@mixin`) are used in DTOs and Resources,
 ensuring **type-safe data transformation** even within dynamic Laravel code.
 
-### 7️⃣ Full Boundary Test Coverage
+### 7️⃣ Thorough Boundary Tests
 Every controller endpoint has corresponding feature tests.
 All **roles**, **validation states**, and **conflict edge cases (409/422)** are asserted.
 - Confirms behavior from user perspective, not just happy paths.
