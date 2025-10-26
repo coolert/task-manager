@@ -18,6 +18,7 @@ class DemoSeeder extends Seeder
         $owner = User::factory()
             ->create([
                 'name'       => 'Admin Owner',
+                'email'      => 'owner@example.com',
                 'avatar_url' => 'https://api.dicebear.com/6.x/micah/jpg?seed=Admin',
             ]);
 

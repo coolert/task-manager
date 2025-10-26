@@ -235,6 +235,33 @@ Example validation error:
 
 ---
 
+## 🔧 Postman Collection (API Testing)
+
+A complete **Postman Collection** is included under [`docs/postman/task_manager_api.postman_collection.json`](docs/postman/task_manager_api.postman_collection.json).
+
+It covers all endpoints:
+- Auth (login / refresh / logout)
+- Projects (CRUD + transfer)
+- Members (CRUD)
+- Labels (CRUD)
+- Tasks (CRUD, assign, claim, comments, labels)
+
+Each request includes:
+- Pre-request token injection
+- Response-based variable setting (`project_id`, `task_id`, etc.)
+- Consistent JSON headers (`Accept: application/json`)
+
+To use it:
+1. Open Postman → **Import** → Select the JSON file
+2. (Optional) Set base URL variable:
+
+    base_url = http://localhost
+3. Run requests manually or via **Collection Runner**
+
+This collection mirrors all Feature Tests, allowing you to manually validate each API flow.
+
+---
+
 ## ⚡ CI/CD
 
 The complete CI workflow is defined in `.github/workflows/ci.yml`.
