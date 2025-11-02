@@ -56,3 +56,23 @@ jobs:
           APP_ENV: testing
         run:
           composer test:parallel
+  api-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install doc tools
+        run: npm ci
+      - name: Validate OpenAPI schema
+        run: npm run openapi:validate
+      - name: Lint OpenAPI with Spectral
+        run: npm run openapi:lint
+      - name: Check Postman JSON is valid
+        run: npm run postman:check-json
+      - name: Check Postman required vars
+        run: npm run postman:check-vars

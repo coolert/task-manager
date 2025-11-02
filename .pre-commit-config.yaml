@@ -17,5 +17,15 @@ repos:
         language: system
         pass_filenames: false
         entry: bash -lc 'docker compose exec -T -w /var/www/html laravel.test composer stan'
+      - id: openapi-validate
+        name: OpenAPI validate
+        entry: bash -lc "npm run openapi:validate && npm run openapi:lint"
+        language: system
+        files: ^docs/openapi/openapi\.yaml$
+      - id: postman-json
+        name: Postman JSON check
+        entry: bash -lc "npm run postman:check-json && npm run postman:check-vars"
+        language: system
+        files: ^docs/postman/.*\.json$
 ci:
   skip: [pint, phpstan]

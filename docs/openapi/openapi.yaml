@@ -1,0 +1,817 @@
+openapi: 3.1.0
+info:
+  title: Task Manager API
+  version: 1.0.0
+  description: |
+    Backend APIs for Projects / Tasks / Members / Labels / Comments.
+    Auth is JWT (Redis-backed blacklist). All responses use a `{ data: ... }` envelope,
+    paginated lists add a `{ meta: { current_page, total, ... } }` object.
+  contact:
+    name: Lv Hui
+    url: https://github.com/coolert/task-manager
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit
+
+servers:
+  - url: http://{host}:{port}
+    description: Local development (Sail)
+    variables:
+      host:
+        default: 127.0.0.1
+        enum: [ 127.0.0.1, host.docker.internal ]
+      port:
+        default: '80'
+        enum: [ '80', '8080', '8000' ]
+  - url: https://dev.coolerk.com
+    description: Production (placeholder)
+
+tags:
+  - name: Auth
+    description: JWT-based authentication (login, refresh, logout, me).
+  - name: Projects
+    description: CRUD and ownership transfer for projects.
+  - name: Project Members
+    description: Manage project membership and roles (owner/admin/member/viewer).
+  - name: Project Labels
+    description: Project-scoped labels (create/update/delete, list).
+  - name: Tasks
+    description: CRUD plus assign/claim within a project.
+  - name: Task Comments
+    description: Add comments to tasks.
+  - name: Task Labels
+    description: Attach/detach labels to tasks.
+
+security:
+  - bearerAuth: []  # default: all endpoints require JWT unless overridden per-path
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Meta:
+      type: object
+      properties:
+        current_page: { type: integer, example: 1 }
+        total: { type: integer, example: 42 }
+
+    ApiError:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+      required: [message]
+
+    User:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: "Tom" }
+        email: { type: string, format: email, example: "owner@example.com" }
+        avatar_url: { type: [string, 'null'] }
+      required: [id, name]
+
+    Project:
+      type: object
+      properties:
+        id: { type: integer, example: 10 }
+        name: { type: string, example: "My Project" }
+        description: { type: [string, 'null'] }
+        owner_id: { type: integer, example: 1 }
+        tasks_count: { type: integer, example: 3 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [id, name, owner_id]
+
+    ProjectMember:
+      type: object
+      properties:
+        id: { type: integer, example: 101 }
+        project_id: { type: integer, example: 10 }
+        user:
+          $ref: '#/components/schemas/User'
+        role:
+          type: string
+          enum: [owner, admin, member, viewer]
+          example: member
+      required: [id, project_id, user, role]
+
+    Label:
+      type: object
+      properties:
+        id: { type: integer, example: 7 }
+        project_id: { type: integer, example: 10 }
+        name: { type: string, example: "Bug" }
+        color: { type: string, example: "#ff0000" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [id, project_id, name, color]
+
+    Task:
+      type: object
+      properties:
+        id: { type: integer, example: 55 }
+        project_id: { type: integer, example: 10 }
+        title: { type: string, example: "Implement Redis blacklist" }
+        description: { type: [string, 'null'] }
+        status:
+          type: string
+          enum: [todo, doing, done]
+          example: todo
+        priority:
+          type: string
+          enum: [low, normal, high]
+          example: normal
+        assignee:
+          oneOf:
+            - $ref: '#/components/schemas/User'
+            - type: 'null'
+        creator:
+          $ref: '#/components/schemas/User'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [id, project_id, title, status, priority, creator]
+
+    TaskComment:
+      type: object
+      properties:
+        id: { type: integer, example: 999 }
+        task_id: { type: integer, example: 55 }
+        user:
+          $ref: '#/components/schemas/User'
+        content: { type: string, example: "hello" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [id, task_id, user, content]
+
+    EnvelopeProject:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/Project' }
+      required: [data]
+
+    EnvelopeProjectList:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Project' }
+        meta: { $ref: '#/components/schemas/Meta' }
+      required: [data]
+
+    EnvelopeTask:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/Task' }
+      required: [data]
+
+    EnvelopeTaskList:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Task' }
+        meta: { $ref: '#/components/schemas/Meta' }
+      required: [data]
+
+    EnvelopeMemberList:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/ProjectMember' }
+      required: [data]
+
+    EnvelopeLabel:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/Label' }
+      required: [data]
+
+    EnvelopeLabelList:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Label' }
+      required: [data]
+
+    EnvelopeComment:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/TaskComment' }
+      required: [data]
+
+paths:
+  /api/auth/login:
+    post:
+      operationId: auth_login
+      tags: [Auth]
+      security: []
+      summary: Login and obtain JWT token
+      description: Issue a short-lived JWT for valid credentials; returns token, type, and expiry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+              required: [email, password]
+            examples:
+              demo:
+                value: { email: "owner@example.com", password: "password" }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  token_type: { type: string, example: "Bearer" }
+                  expires_in: { type: integer, example: 3600 }
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+        '401':
+          description: Invalid credentials
+
+  /api/auth/me:
+    get:
+      operationId: auth_me
+      tags: [Auth]
+      summary: Get current authenticated user
+      description: Return the currently authenticated user’s basic profile.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401':
+          description: Unauthorized
+
+  /api/auth/refresh:
+    post:
+      operationId: auth_refresh
+      tags: [Auth]
+      summary: Refresh JWT token
+      description: Refresh the current JWT and return a new token with updated expiry.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  token_type: { type: string, example: "Bearer" }
+                  expires_in: { type: integer, example: 3600 }
+        '401':
+          description: Unauthorized
+
+  /api/auth/logout:
+    post:
+      operationId: auth_logout
+      tags: [Auth]
+      summary: Logout and blacklist JWT
+      description: Invalidate the current JWT via Redis blacklist to immediately revoke access.
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+
+  /api/projects:
+    get:
+      operationId: projects_index
+      tags: [Projects]
+      summary: List projects I own or joined
+      description: List projects the user owns or has joined (paginated).
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeProjectList' }
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+    post:
+      operationId: projects_store
+      tags: [Projects]
+      summary: Create project
+      description: Create a new project as the authenticated user (becomes Owner).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 120 }
+                description: { type: [string, 'null'] }
+              required: [name]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeProject' }
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /api/projects/{project}:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: projects_show
+      tags: [Projects]
+      summary: Show project (member required)
+      description: Show project details; requires membership in the project.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeProject' }
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+
+    patch:
+      operationId: projects_update
+      tags: [Projects]
+      summary: Update project (owner/admin)
+      description: Update project metadata; allowed for Owner and Admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 120}
+                description: { type: [string, 'null'] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeProject' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+    delete:
+      operationId: projects_destroy
+      tags: [Projects]
+      summary: Delete project (owner only, soft delete)
+      description: Soft-delete a project; allowed for Owner only.
+      responses:
+        '204': { description: No Content }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+  /api/projects/{project}/owner:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      operationId: projects_transfer_ownership
+      tags: [Projects]
+      summary: Transfer ownership (owner only, new owner must be a member)
+      description: Transfer project ownership to an existing Admin member.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_owner_id: { type: integer }
+              required: [new_owner_id]
+      responses:
+        '200': { description: OK }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/projects/{project}/members:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: project_members_index
+      tags: [Project Members]
+      summary: List project members (owner/admin)
+      description: List project members and their roles; Owner/Admin only.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeMemberList' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+    post:
+      operationId: project_members_store
+      tags: [Project Members]
+      summary: Add project member (owner/admin)
+      description: Add a user to the project with a specific role; Owner/Admin only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: integer }
+                role:
+                  type: string
+                  enum: [admin, member, viewer]
+              required: [user_id, role]
+      responses:
+        '201': { description: Created }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/projects/{project}/members/{project_member}:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+      - name: project_member
+        in: path
+        required: true
+        schema: { type: integer }
+    patch:
+      operationId: project_members_update
+      tags: [Project Members]
+      summary: Update member role (owner/admin)
+      description: Change a member’s role (e.g., Member → Admin); Owner/Admin only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [admin, member, viewer]
+              required: [role]
+      responses:
+        '200': { description: OK }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+    delete:
+      operationId: project_members_destroy
+      tags: [Project Members]
+      summary: Remove member (owner/admin; cannot delete Owner)
+      description: Remove a member from the project; Owner/Admin only.
+      responses:
+        '204': { description: No Content }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/projects/{project}/labels:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: project_labels_index
+      tags: [Project Labels]
+      summary: List labels (project member)
+      description: List labels scoped to this project.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeLabelList' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+    post:
+      operationId: project_labels_store
+      tags: [Project Labels]
+      summary: Create label (owner/admin)
+      description: Create a new label in this project; Owner/Admin only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 40 }
+                color: { type: string, maxLength: 16 , example: "#00ff00" }
+              required: [name, color]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeLabel'}
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/projects/{project}/labels/{label}:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+      - name: label
+        in: path
+        required: true
+        schema: { type: integer }
+    patch:
+      operationId: project_labels_update
+      tags: [Project Labels]
+      summary: Update label (owner/admin)
+      description: Rename or update a project label; Owner/Admin only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 40 }
+                color: { type: string, maxLength: 16 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeLabel' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+    delete:
+      operationId: project_labels_destroy
+      tags: [Project Labels]
+      summary: Delete label (owner/admin; 409 if label used by any task)
+      description: Delete a project label; Owner/Admin only.
+      responses:
+        '204': { description: No Content }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '409': { description: Conflict }
+
+  /api/projects/{project}/tasks:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: project_tasks_index
+      tags: [Tasks]
+      summary: List tasks (project member; paginated)
+      description: List tasks in the project (member access; paginated).
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeTaskList' }
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+    post:
+      operationId: project_tasks_store
+      tags: [Tasks]
+      summary: Create task (owner/admin/member)
+      description: Create a task in the project; requires Member or higher.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 150 }
+                description: { type: [string, 'null'] }
+                assignee_id: { type: [integer, 'null'], description: "Non-viewer member of this project" }
+                status: { type: string, enum: [todo, doing, done] }
+                priority: { type: string, enum: [low, normal, high] }
+                due_date: { type: [string, 'null'], format: date }
+                order_no: { type: [integer, 'null'] }
+              required: [title, status, priority]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeTask' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/tasks/{task}:
+    parameters:
+      - name: task
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: tasks_show
+      tags: [Tasks]
+      summary: Show task (project member)
+      description: Show task details; requires membership in the owning project.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeTask' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+    patch:
+      operationId: tasks_update
+      tags: [Tasks]
+      summary: Update task (owner/admin/creator/assignee; assignee_id cannot be changed here)
+      description: Update a task; allowed for Owner/Admin, creator, or current assignee.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 150 }
+                description: { type: [string, 'null'] }
+                status: { type: string, enum: [todo, doing, done] }
+                priority: { type: string, enum: [low, normal, high] }
+                due_date: { type: [string, 'null'], format: date }
+                order_no: { type: [integer, 'null'] }
+      responses:
+        '200': { description: OK }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+    delete:
+      operationId: tasks_destroy
+      tags: [Tasks]
+      summary: Delete task (owner/admin/creator)
+      description: Delete a task; allowed for Owner/Admin or the task creator.
+      responses:
+        '204': { description: No Content }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+  /api/tasks/{task}/assign:
+    parameters:
+      - name: task
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      operationId: tasks_assign
+      tags: [Tasks]
+      summary: Assign task (owner/admin; assignee must be non-viewer member)
+      description: Assign the task to a non-viewer project member; Owner/Admin only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assignee_id: { type: integer }
+              required: [assignee_id]
+      responses:
+        '200': { description: OK }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/tasks/{task}/claim:
+    parameters:
+      - name: task
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      operationId: tasks_claim
+      tags: [Tasks]
+      summary: Claim task (owner/admin/member; only when unassigned)
+      description: Claim an unassigned task for the current user (Member or higher).
+      responses:
+        '200': { description: OK }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+
+  /api/tasks/{task}/comments:
+    parameters:
+      - name: task
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      operationId: task_comments_store
+      tags: [Task Comments]
+      summary: Add a comment (project member)
+      description: Add a comment to the task; requires membership in the project.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string }
+              required: [content]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvelopeComment' }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '422': { description: Unprocessable Entity }
+
+  /api/tasks/{task}/labels/{label}:
+    parameters:
+      - name: task
+        in: path
+        required: true
+        schema: { type: integer }
+      - name: label
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      operationId: task_labels_attach
+      tags: [Task Labels]
+      summary: Attach label (same project only; idempotent)
+      description: Attach a project-scoped label to the task; membership required.
+      responses:
+        '200': { description: OK }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '409': { description: Conflict (cross-project) }
+
+    delete:
+      operationId: task_labels_detach
+      tags: [Task Labels]
+      summary: Detach label (idempotent)
+      description: Detach a project-scoped label from the task; membership required.
+      responses:
+        '204': { description: No Content }
+        '403': { description: Forbidden }
+        '404': { description: Not Found }
+        '409': { description: Conflict (cross-project) }
