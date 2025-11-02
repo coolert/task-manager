@@ -253,12 +253,44 @@ Each request includes:
 
 To use it:
 1. Open Postman → **Import** → Select the JSON file
-2. (Optional) Set base URL variable:
-
-    base_url = http://localhost
+2. (Optional) Set base URL variable: base_url = http://localhost
 3. Run requests manually or via **Collection Runner**
 
 This collection mirrors all Feature Tests, allowing you to manually validate each API flow.
+
+---
+
+## 📘 OpenAPI Specification & Validation
+
+The project also provides a **full OpenAPI 3.1 specification** to describe every API endpoint with precise request and response schemas.
+It complements the Postman collection and allows visual exploration or automated validation.
+
+| File | Description |
+|------|--------------|
+| [`docs/openapi/openapi.yaml`](docs/openapi/openapi.yaml) | Complete OpenAPI 3.1 definition |
+| [`docs/postman/task_manager_api.postman_collection.json`](docs/postman/task_manager_api.postman_collection.json) | Postman collection for manual testing |
+
+### Why It Matters
+- Guarantees consistency between code and documentation
+- Enables Swagger UI or Redoc-based visualization
+- Supports auto-generated clients and mock servers
+- Validated automatically in pre-commit and CI
+
+### Local Validation
+
+```bash
+# Validate OpenAPI syntax
+npm run openapi:validate
+
+# Lint OpenAPI rules (Spectral)
+npm run openapi:lint
+
+# Check Postman collection
+npm run postman:check-json
+npm run postman:check-vars
+```
+
+These checks are also part of the CI pipeline — ensuring the documentation always stays in sync with the codebase.
 
 ---
 
@@ -292,14 +324,17 @@ jobs:
       - run: composer test:parallel
 ```
 
+*(The full pipeline also includes OpenAPI and Postman validation steps — see package.json for details.)*
+
 Runs full pipeline:
 - Lint (Pint)
 - Static analysis (PHPStan)
 - Migrate + Seed (SQLite)
 - Redis service
 - Parallel feature tests (Pest)
+- Documentation validation (OpenAPI + Postman)
 
-Each PR runs the same suite to ensure code quality and regression safety.
+Each PR runs the same suite to ensure consistent code quality and up-to-date API documentation.
 
 ---
 
