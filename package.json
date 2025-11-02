@@ -8,7 +8,7 @@
         "openapi:validate": "redocly lint docs/openapi/openapi.yaml --max-problems=0",
         "openapi:lint": "spectral lint docs/openapi/openapi.yaml --fail-severity=error",
         "postman:check-json": "jq -e . docs/postman/task_manager_api.postman_collection.json >/dev/null",
-        "postman:check-vars": "grep -q '{{BASE_URL}}' docs/postman/task_manager_api.postman_collection.json && grep -q '{{token}}' docs/postman/task_manager_api.postman_collection.json && grep -q 'Authorization' docs/postman/task_manager_api.postman_collection.json"
+        "postman:check-vars": "grep -q '{{base_url}}' docs/postman/task_manager_api.postman_collection.json && grep -q '{{token}}' docs/postman/task_manager_api.postman_collection.json && grep -q 'Authorization' docs/postman/task_manager_api.postman_collection.json"
     },
     "devDependencies": {
         "@redocly/cli": "^2.10.0",
