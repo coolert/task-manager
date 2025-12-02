@@ -353,6 +353,24 @@ Each PR runs the same suite to ensure consistent code quality and up-to-date API
 
 ---
 
+## 🔄 Message Pipeline (Outbox → RabbitMQ → Consumer → Inbox)
+
+This project includes a production-grade Message Pipeline built on RabbitMQ, designed for **guaranteed delivery**, **idempotency**, and **event-driven consistency**.
+
+Core components:
+- **Outbox Pattern** — durable DB-backed event storage
+- **OutboxDispatcher** — reliable, batched delivery into RabbitMQ
+- **Retry Exchanges** — delayed redelivery via dead-lettering (10s → 60s → 5m)
+- **Structured Consumers** — BaseHandler lifecycle + idempotency + version ordering
+- **Inbox Pattern** — deduplication & exactly-once processing
+- **Parking Queue** — final DLQ after all retry stages
+- **Fully Tested** — mock-based AMQPChannel / AMQPMessage pipeline (Pest + Mockery)
+
+Full documentation, including architecture overview and design details:
+[`docs/message-pipeline.md`](docs/message-pipeline.md)
+
+---
+
 ## 🧠 Design Decisions
 
 This project was intentionally designed to follow **clean backend engineering principles**

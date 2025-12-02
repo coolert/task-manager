@@ -1,6 +1,7 @@
 includes:
   - vendor/larastan/larastan/extension.neon
   - vendor/pestphp/pest/extension.neon
+  - vendor/phpstan/phpstan-mockery/extension.neon
 parameters:
   paths:
     - app
@@ -12,6 +13,13 @@ parameters:
   tmpDir: build/phpstan
   bootstrapFiles:
     - vendor/larastan/larastan/bootstrap.php
-  ignoreErrors: []
+  ignoreErrors:
+    - '#AMQPIOException is never thrown#'
+    -
+      message: '#Access to an undefined property PHPUnit\\Framework\\TestCase::\$\w+\.#'
+      path: tests/*
+    -
+      message: '#Call to an undefined method .+::shouldReceive\(\)\.#'
+      path: tests/*
   parallel:
     maximumNumberOfProcesses: 4

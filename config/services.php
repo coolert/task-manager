@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'webhooks' => [
+        'task_created' => env('TASK_CREATED_WEBHOOK_URL'),
+    ],
+
 ];
