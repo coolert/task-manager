@@ -27,8 +27,6 @@ OpenAPI 3.1 documentation, RabbitMQ message pipeline, and a complete CI workflow
 
 ## ⚙️ Setup & Quick Start
 
-### Environment
-
 ```bash
 cp .env.example .env
 ./vendor/bin/sail up -d
