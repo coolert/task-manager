@@ -54,6 +54,7 @@ jobs:
       - name: Test (PHPUnit)
         env:
           APP_ENV: testing
+          REDIS_HOST: 127.0.0.1
         run:
           composer test:parallel
   api-docs:
