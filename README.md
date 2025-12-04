@@ -29,8 +29,10 @@ OpenAPI 3.1 documentation, RabbitMQ message pipeline, and a complete CI workflow
 
 ```bash
 cp .env.example .env
+composer install
 ./vendor/bin/sail up -d
 ./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan jwt:secret --force
 ./vendor/bin/sail artisan migrate --seed
 ```
 
@@ -110,6 +112,16 @@ Includes:
 Run all tests (parallel):
 ```bash
 composer test:parallel
+```
+
+Before running tests locally, ensure:
+
+```bash
+cp .env.testing.example .env.testing
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate --env=testing --force
+./vendor/bin/sail artisan jwt:secret --env=testing --force
+touch database/testing.sqlite
 ```
 
 Covers:
