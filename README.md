@@ -111,7 +111,7 @@ Includes:
 
 Run all tests (parallel):
 ```bash
-composer test:parallel
+./vendor/bin/sail composer test:parallel
 ```
 
 Before running tests locally, ensure:
