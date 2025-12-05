@@ -1,5 +1,8 @@
 # 🗂️ Task Manager (Laravel 12)
 
+![CI](https://github.com/coolert/task-manager/actions/workflows/ci.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
 A production-grade **Laravel 12 backend** showcasing clean architecture, strict typing,
 fully tested APIs, and modern engineering practices.
 
