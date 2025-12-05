@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Faker\Factory;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -11,7 +12,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        fake()->seed(20250920);
+        Factory::create()->seed(20250920);
 
         $profile = config('seeding.profile', 'demo');
 
