@@ -3,11 +3,10 @@
 ![CI](https://github.com/coolert/task-manager/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-A production-grade **Laravel 12 backend** showcasing clean architecture, strict typing,
-fully tested APIs, and modern engineering practices.
-
-Includes JWT auth (Redis blacklist), policy-based RBAC, DTOs + Services,
-OpenAPI 3.1 documentation, RabbitMQ message pipeline, and a complete CI workflow.
+A collaborative task & project management backend built with Laravel 12,
+featuring clean architecture, strict typing, full test coverage, and modern
+engineering practices such as CI/CD automation, RabbitMQ-based messaging,
+and a robust RBAC authentication system.
 
 ---
 
@@ -25,6 +24,19 @@ OpenAPI 3.1 documentation, RabbitMQ message pipeline, and a complete CI workflow
 | **Docs**           | OpenAPI 3.1 + Postman Collection (auto-validated in CI)                              |
 | **CI/CD**          | GitHub Actions: lint → static analysis → migrate/seed → parallel tests → docs checks |
 | **Runtime**        | Laravel Sail (MySQL, Redis, RabbitMQ)                                                |
+
+---
+
+## ⭐ Tech Highlights
+
+- Clean architecture with DTO + Service layer
+- Policy-based RBAC with scoped model binding
+- Fully tested APIs using Pest (parallel)
+- Production-grade message pipeline (Outbox → Retry → Inbox → DLQ)
+- Deployment automation with GitHub Actions + SSH
+- Supervisor-managed queue workers
+- Redis-backed JWT blacklist for secure logout
+- OpenAPI 3.1 documentation with automated validation
 
 ---
 
@@ -181,10 +193,10 @@ The project includes a lightweight production deployment workflow:
 - Manual deployment trigger via GitHub Actions
 - Secure SSH deployment to the server
 - Server executes a deploy.sh script:
-- Pull latest code
-- Install optimized Composer dependencies
-- Run database migrations
-- Rebuild application caches
+  - Pull latest code
+  - Install optimized Composer dependencies
+  - Run database migrations
+  - Rebuild application caches
 - Supervisor manages long-running workers (mq:work)
 - Cron (run as www-data) triggers Laravel’s scheduler every minute
 
