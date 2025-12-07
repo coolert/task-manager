@@ -102,10 +102,17 @@ Two documentation formats are provided:
 
 ### OpenAPI 3.1
 
-Location: [`docs/openapi/openapi.yaml`](docs/openapi/openapi.yaml)
-Visual UI available locally:
+Specification file: [`docs/openapi/openapi.yaml`](docs/openapi/openapi.yaml)
+
+API documentation available via Swagger UI and Redoc:
+
+**Local (development)**
 - Swagger UI → http://localhost/swagger.html
 - Redoc → http://localhost/redoc.html
+
+**Production (read-only)**
+- Swagger UI → https://api.task.coolerk.com/swagger.html
+- Redoc → https://api.task.coolerk.com/redoc.html
 
 ### Postman Collection
 

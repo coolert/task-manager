@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Task Manager API Docs (Redoc)</title>
@@ -15,11 +15,10 @@
 <script>
   (async () => {
     try {
-      await Redoc.init('/openapi.yaml', {
-      }, document.getElementById('redoc-container'));
-      console.log('Redoc rendered OK');
+      await Redoc.init("/openapi/openapi.yaml", {}, document.getElementById("redoc-container"));
+      console.log("Redoc rendered OK");
     } catch (e) {
-      console.error('Redoc render error:', e);
+      console.error("Redoc render error:", e);
     }
   })();
 </script>
