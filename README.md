@@ -147,6 +147,49 @@ GitHub Actions runs:
 - OpenAPI validation (Redocly + Spectral)
 - Postman collection checks
 
+### CI/CD Pipeline Diagram
+
+```mermaid
+flowchart LR
+    subgraph GitHub["GitHub Actions"]
+        A["Push / Pull Request\n(auto CI)"]
+        B["CI Jobs\n(Pint · PHPStan · Tests · Docs)"]
+        C["Manual Deploy Trigger\n(workflow_dispatch)"]
+        D["Deploy Job\nSSH to server"]
+    end
+
+    subgraph Server["Production Server"]
+        E["deploy.sh\n(update code,\ncomposer install,\nmigrate,\ncache rebuild)"]
+        F["Supervisor\nmanages mq:work"]
+        G["Cron (www-data)\nruns schedule:run"]
+    end
+
+    A --> B
+    C --> D --> E
+
+    %% Supervisor and Cron run independently
+    E -.-> F
+    E -.-> G
+```
+
+---
+
+## 📦 Deployment (Overview)
+
+The project includes a lightweight production deployment workflow:
+
+- Manual deployment trigger via GitHub Actions
+- Secure SSH deployment to the server
+- Server executes a deploy.sh script:
+- Pull latest code
+- Install optimized Composer dependencies
+- Run database migrations
+- Rebuild application caches
+- Supervisor manages long-running workers (mq:work)
+- Cron (run as www-data) triggers Laravel’s scheduler every minute
+
+➡️ Full deployment flow documentation: [`docs/deployment.md`](docs/deployment.md)
+
 ---
 
 ## 🔄 Message Pipeline (RabbitMQ)
