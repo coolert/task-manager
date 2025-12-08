@@ -6,7 +6,20 @@ This document contains practical examples showing how to interact with the Task 
 
 ## Authentication
 
+### Register
+
+```bash
+POST /api/auth/register
+{
+  "name": "Demo",
+  "email": "demo@example.com",
+  "password": "secret123",
+  "password_confirmation": "secret123"
+}
+```
+
 ### Login
+
 ```bash
 POST /api/auth/login
 {
