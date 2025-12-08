@@ -2,11 +2,75 @@
 
 use App\Models\User;
 
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\Fluent\AssertableJson;
+
+use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
 use function Pest\Laravel\withHeaders;
 
 use PHPOpenSourceSaver\JWTAuth\JWTGuard;
+
+it('registers a new user and returns token + user resource', function () {
+    $payload = [
+        'name'                  => 'John Doe',
+        'email'                 => 'john@example.com',
+        'password'              => 'secret123',
+        'password_confirmation' => 'secret123',
+    ];
+
+    $response = postJson('/api/auth/register', $payload);
+
+    $response->assertCreated();
+
+    $response->assertJson(fn (AssertableJson $json) => $json->has('token')
+        ->where('token_type', 'Bearer')
+        ->has('expires_in')
+        ->has('user', fn ($json) => $json->where('name', 'John Doe')
+            ->where('email', 'john@example.com')
+            ->etc()
+        )
+    );
+
+    assertDatabaseHas('users', [
+        'name'  => 'John Doe',
+        'email' => 'john@example.com',
+    ]);
+
+    $user = User::firstWhere('email', 'john@example.com');
+    expect(Hash::check('secret123', $user->password))->toBeTrue();
+});
+
+it('fails if email already exists', function () {
+    User::factory()->create(['email' => 'dup@example.com']);
+
+    $payload = [
+        'name'                  => 'Test',
+        'email'                 => 'dup@example.com',
+        'password'              => 'password123',
+        'password_confirmation' => 'password123',
+    ];
+
+    $response = postJson('/api/auth/register', $payload);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['email']);
+});
+
+it('fails when validation rules are not met', function () {
+    $payload = [
+        'name'                  => '',
+        'email'                 => 'not-an-email',
+        'password'              => '123',
+        'password_confirmation' => '456',
+    ];
+
+    $response = postJson('/api/auth/register', $payload);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['name', 'email', 'password']);
+});
 
 it('login works and returns bearer token', function () {
     $pwd  = 'secret123';
@@ -40,7 +104,7 @@ it('me / refresh / logout', function () {
 
     requestAs($user, 'GET', '/api/auth/me')
         ->assertOk()
-        ->assertJson(['id' => $user->id]);
+        ->assertJsonPath('data.id', $user->id);
 
     requestAs($user, 'POST', '/api/auth/refresh')
         ->assertOk()

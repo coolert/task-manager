@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\UserResource;
+use App\Http\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -9,6 +12,14 @@ use PHPOpenSourceSaver\JWTAuth\JWTGuard;
 
 class AuthController extends Controller
 {
+    public function register(RegisterRequest $request, AuthService $service): JsonResponse
+    {
+        $dto  = $request->toDTO();
+        $data = $service->register($dto);
+
+        return response()->json($data, 201);
+    }
+
     public function login(Request $request): JsonResponse
     {
         /** @var JWTGuard $guard */
@@ -56,11 +67,11 @@ class AuthController extends Controller
         return response()->noContent();
     }
 
-    public function me(): JsonResponse
+    public function me(): UserResource
     {
         /** @var JWTGuard $guard */
         $guard = auth('api');
 
-        return response()->json($guard->user());
+        return UserResource::make($guard->user());
     }
 }

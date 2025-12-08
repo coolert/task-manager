@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectMemberController;
@@ -9,8 +10,11 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskLabelController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/health', HealthController::class);
+
 Route::middleware('jwt.auth')->group(function () {
     Route::scopeBindings()->group(function () {
+        Route::post('/auth/register', [AuthController::class, 'register'])->withoutMiddleware('jwt.auth');
         Route::post('/auth/login', [AuthController::class, 'login'])->withoutMiddleware('jwt.auth');
         Route::post('/auth/refresh', [AuthController::class, 'refresh']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);

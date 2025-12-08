@@ -211,6 +211,12 @@ The project includes a lightweight production deployment workflow:
 
 ---
 
+## 🩺 Health Check
+
+A lightweight endpoint used for uptime monitoring and deployment verification:
+
+`GET /api/health → { "status": "ok", "timestamp": "..." }`
+
 ## 🔄 Message Pipeline (RabbitMQ)
 
 This project implements a production-grade message pipeline:

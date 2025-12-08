@@ -41,6 +41,8 @@ tags:
     description: Add comments to tasks.
   - name: Task Labels
     description: Attach/detach labels to tasks.
+  - name: System
+    description: Lightweight system endpoints for health and uptime checks.
 
 security:
   - bearerAuth: []  # default: all endpoints require JWT unless overridden per-path
@@ -215,6 +217,43 @@ components:
       required: [data]
 
 paths:
+  /api/auth/register:
+    post:
+      operationId: auth_register
+      tags: [Auth]
+      security: []
+      summary: Register a new user
+      description: Create a new user account and automatically return a JWT access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, example: John Doe }
+                email: { type: string, format: email, example: john@example.com }
+                password: { type: string, format: password, minLength: 8, example: password123 }
+                password_confirmation: { type: string, format: password, minLength: 8, example: password123 }
+              required: [ name, email, password, password_confirmation ]
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  token_type: { type: string, example: Bearer }
+                  expires_in: { type: integer, example: 3600 }
+                  user: { $ref: '#/components/schemas/User' }
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
   /api/auth/login:
     post:
       operationId: auth_login
@@ -265,7 +304,11 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/User' }
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized
 
@@ -815,3 +858,21 @@ paths:
         '403': { description: Forbidden }
         '404': { description: Not Found }
         '409': { description: Conflict (cross-project) }
+
+  /api/health:
+    get:
+      operationId: health_check
+      tags: [System]
+      security: []
+      summary: Health check endpoint
+      description: Lightweight health probe used by load balancers, uptime monitoring and deployment checks. Does not touch external dependencies and always returns quickly.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  timestamp: { type: string, format: date-time, example: 2025-12-08T12:34:56Z }
