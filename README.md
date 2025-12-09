@@ -3,10 +3,24 @@
 ![CI](https://github.com/coolert/task-manager/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-A collaborative task & project management backend built with Laravel 12,
-featuring clean architecture, strict typing, full test coverage, and modern
-engineering practices such as CI/CD automation, RabbitMQ-based messaging,
-and a robust RBAC authentication system.
+A collaborative task & project management backend built with Laravel 12, featuring clean architecture, strict typing, full test coverage, and modern engineering practices such as CI/CD automation, RabbitMQ-based messaging, and a robust RBAC authentication system.
+
+---
+
+## Table of Contents
+- [Features Overview](#-features-overview)
+- [Tech Highlights](#-tech-highlights)
+- [Setup & Quick Start](#-setup--quick-start)
+- [Auth & Permissions (Overview)](#-auth--permissions-overview)
+- [Domain Models](#-domain-models)
+- [API Documentation](#-api-documentation)
+- [Testing](#-testing)
+- [CI/CD](#-cicd)
+- [Deployment (Overview)](#-deployment-overview)
+- [Health Check](#-health-check)
+- [Message Pipeline (RabbitMQ)](#-message-pipeline-rabbitmq)
+- [Design Decisions](#-design-decisions)
+- [License](#license)
 
 ---
 
@@ -216,6 +230,8 @@ The project includes a lightweight production deployment workflow:
 A lightweight endpoint used for uptime monitoring and deployment verification:
 
 `GET /api/health → { "status": "ok", "timestamp": "..." }`
+
+---
 
 ## 🔄 Message Pipeline (RabbitMQ)
 
