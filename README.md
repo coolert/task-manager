@@ -54,7 +54,7 @@ A collaborative task & project management backend built with Laravel 12, featuri
 
 ---
 
-## ⚙️ Setup & Quick Start
+## 🛠 Setup & Quick Start
 
 ```bash
 cp .env.example .env
